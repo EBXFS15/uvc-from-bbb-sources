@@ -21,7 +21,10 @@
 #include <linux/vmalloc.h>
 #include <linux/wait.h>
 #include <media/videobuf2-vmalloc.h>
+
+/* ----------------------- EBX- PATCH START ----------------------- */
 #include <linux/gpio/consumer.h>
+/* ----------------------- EBX- PATCH END   ----------------------- */
 
 #include "uvcvideo.h"
 /* ------------------------------------------------------------------------
@@ -151,12 +154,12 @@ static struct vb2_ops uvc_queue_qops = {
 int uvc_queue_init(struct uvc_video_queue *queue, enum v4l2_buf_type type,
 		    int drop_corrupted)
 {
-	/* EBX- PTACH
-	 */
+	int ret;
+
+	/* ----------------------- EBX- PATCH START ----------------------- */
 	gpio_led = gpio_to_desc(69);
 	gpiod_direction_output(gpio_led,1);
-
-	int ret;
+	/* ----------------------- EBX- PATCH END   ----------------------- */
 
 	queue->queue.type = type;
 	queue->queue.io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
@@ -378,6 +381,10 @@ void uvc_queue_cancel(struct uvc_video_queue *queue, int disconnect)
 	if (disconnect)
 		queue->flags |= UVC_QUEUE_DISCONNECTED;
 	spin_unlock_irqrestore(&queue->irqlock, flags);
+
+	/* ----------------------- EBX- PATCH START ----------------------- */
+	gpiod_put(gpio_led);
+	/* ----------------------- EBX- PATCH END   ----------------------- */
 }
 
 struct uvc_buffer *uvc_queue_next_buffer(struct uvc_video_queue *queue,
@@ -402,6 +409,14 @@ struct uvc_buffer *uvc_queue_next_buffer(struct uvc_video_queue *queue,
 	else
 		nextbuf = NULL;
 	spin_unlock_irqrestore(&queue->irqlock, flags);
+
+//	buf->buf.v4l2_buf.field = V4L2_FIELD_NONE;
+//	buf->buf.v4l2_buf.sequence = queue->sequence++;
+	/* ----------------------- EBX- PATCH START ----------------------- */
+	v4l2_get_timestamp(&buf->buf.v4l2_buf.timestamp);
+
+	gpiod_set_value(gpio_led, !gpiod_get_value(gpio_led));
+	/* ----------------------- EBX- PATCH END   ----------------------- */
 
 	buf->state = buf->error ? VB2_BUF_STATE_ERROR : UVC_BUF_STATE_DONE;
 	vb2_set_plane_payload(&buf->buf, 0, buf->bytesused);
