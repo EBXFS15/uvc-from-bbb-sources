@@ -1,0 +1,2 @@
+/opt/embedded/bbb/rootfs/opt/ldd/uvc-from-bbb-sources/ebx_monitor/ebx_monitor-1.ko
+/opt/embedded/bbb/rootfs/opt/ldd/uvc-from-bbb-sources/ebx_monitor/ebx_monitor-1.o

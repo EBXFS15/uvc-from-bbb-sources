@@ -1,0 +1,2 @@
+0xe16007ba	ebx_monitor_gotnewframe	/opt/embedded/bbb/rootfs/opt/ldd/uvc-from-bbb-sources/ebx_monitor/ebx_monitor-1	EXPORT_SYMBOL_GPL
+0x9040eeeb	ebx_monitor_gotframe	/opt/embedded/bbb/rootfs/opt/ldd/uvc-from-bbb-sources/ebx_monitor/ebx_monitor-1	EXPORT_SYMBOL_GPL
