@@ -22,18 +22,21 @@
 #include <linux/wait.h>
 #include <media/videobuf2-vmalloc.h>
 
+#include "uvcvideo.h"
+
 /* ----------------------- EBX- PATCH START ----------------------- */
 #include <linux/gpio/consumer.h>
-/* ----------------------- EBX- PATCH END   ----------------------- */
 
-#include "uvcvideo.h"
-/* ------------------------------------------------------------------------
- *
- * Time measurement patch for EBX EyeTracker tests.
- */
+
+extern void ebx_monitor_gotnewframe(const struct timeval* inTimeOfNewFrameP);
+extern void ebx_monitor_gotframe(void);
+
+void (*pebx_monitor_gotnewframe)(const struct timeval* inTimeOfNewFrameP);
+void (*pebx_monitor_gotframe)(void);
+
 struct gpio_desc * gpio_led;
 
-
+/* ----------------------- EBX- PATCH END   ----------------------- */
 
 /* ------------------------------------------------------------------------
  * Video buffers queue management.
@@ -159,6 +162,9 @@ int uvc_queue_init(struct uvc_video_queue *queue, enum v4l2_buf_type type,
 	/* ----------------------- EBX- PATCH START ----------------------- */
 	gpio_led = gpio_to_desc(69);
 	gpiod_direction_output(gpio_led,1);
+
+	pebx_monitor_gotnewframe = symbol_get(ebx_monitor_gotnewframe);
+
 	/* ----------------------- EBX- PATCH END   ----------------------- */
 
 	queue->queue.type = type;
@@ -384,6 +390,10 @@ void uvc_queue_cancel(struct uvc_video_queue *queue, int disconnect)
 
 	/* ----------------------- EBX- PATCH START ----------------------- */
 	gpiod_put(gpio_led);
+
+	if (pebx_monitor_gotnewframe != NULL) {
+		symbol_put(ebx_monitor_gotnewframe);
+	}
 	/* ----------------------- EBX- PATCH END   ----------------------- */
 }
 
@@ -414,8 +424,16 @@ struct uvc_buffer *uvc_queue_next_buffer(struct uvc_video_queue *queue,
 //	buf->buf.v4l2_buf.sequence = queue->sequence++;
 	/* ----------------------- EBX- PATCH START ----------------------- */
 	v4l2_get_timestamp(&buf->buf.v4l2_buf.timestamp);
+	if (pebx_monitor_gotnewframe != NULL) {
+		pebx_monitor_gotnewframe(&buf->buf.v4l2_buf.timestamp);
+	}
+	else{
+		pebx_monitor_gotnewframe = symbol_get(ebx_monitor_gotnewframe);
+		if (pebx_monitor_gotnewframe != NULL) {
+			pebx_monitor_gotnewframe(&buf->buf.v4l2_buf.timestamp);
+		}
+	}
 
-	gpiod_set_value(gpio_led, !gpiod_get_value(gpio_led));
 	/* ----------------------- EBX- PATCH END   ----------------------- */
 
 	buf->state = buf->error ? VB2_BUF_STATE_ERROR : UVC_BUF_STATE_DONE;
@@ -424,3 +442,4 @@ struct uvc_buffer *uvc_queue_next_buffer(struct uvc_video_queue *queue,
 
 	return nextbuf;
 }
+
