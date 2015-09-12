@@ -31,6 +31,13 @@
 
 #include "uvcvideo.h"
 
+/* ----------------------- EBX- PATCH START ----------------------- */
+
+extern void  loc_ebx_monitor_gotnewframe(const struct uvc_buffer *buf);
+extern void loc_ebx_monitor_gotframe(const struct uvc_buffer *buf, const char inTag);
+
+/* ----------------------- EBX- PATCH END   ----------------------- */
+
 /* ------------------------------------------------------------------------
  * UVC ioctls
  */
@@ -1021,6 +1028,8 @@ static long uvc_v4l2_do_ioctl(struct file *file, unsigned int cmd, void *arg)
 		if (!uvc_has_privileges(handle))
 			return -EBUSY;
 
+		loc_ebx_monitor_gotframe(arg, 92); /* EBX - DEQUE BUFFER REQUEST */
+
 		return uvc_dequeue_buffer(&stream->queue, arg,
 			file->f_flags & O_NONBLOCK);
 
@@ -1337,6 +1346,8 @@ static int uvc_v4l2_mmap(struct file *file, struct vm_area_struct *vma)
 	struct uvc_streaming *stream = handle->stream;
 
 	uvc_trace(UVC_TRACE_CALLS, "uvc_v4l2_mmap\n");
+
+	
 
 	return uvc_queue_mmap(&stream->queue, vma);
 }

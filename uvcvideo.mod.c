@@ -84,6 +84,7 @@ __attribute__((section("__versions"))) = {
 	{ 0xbb03b3ab, __VMLINUX_SYMBOL_STR(vb2_querybuf) },
 	{ 0x2196324, __VMLINUX_SYMBOL_STR(__aeabi_idiv) },
 	{ 0x6ec51023, __VMLINUX_SYMBOL_STR(media_entity_init) },
+	{ 0x868784cb, __VMLINUX_SYMBOL_STR(__symbol_get) },
 	{ 0xbc5671dc, __VMLINUX_SYMBOL_STR(v4l_printk_ioctl) },
 	{ 0x59e5070d, __VMLINUX_SYMBOL_STR(__do_div64) },
 	{ 0x16244fe5, __VMLINUX_SYMBOL_STR(v4l2_prio_check) },
@@ -118,6 +119,7 @@ __attribute__((section("__versions"))) = {
 	{ 0x1111e6fc, __VMLINUX_SYMBOL_STR(v4l2_fh_del) },
 	{ 0xefd6cf06, __VMLINUX_SYMBOL_STR(__aeabi_unwind_cpp_pr0) },
 	{ 0x8106095a, __VMLINUX_SYMBOL_STR(v4l2_prio_max) },
+	{ 0x6e9dd606, __VMLINUX_SYMBOL_STR(__symbol_put) },
 	{ 0x8f678b07, __VMLINUX_SYMBOL_STR(__stack_chk_guard) },
 	{ 0x1621a46b, __VMLINUX_SYMBOL_STR(usb_ifnum_to_if) },
 	{ 0xb81960ca, __VMLINUX_SYMBOL_STR(snprintf) },
@@ -125,11 +127,13 @@ __attribute__((section("__versions"))) = {
 	{ 0x68d98d3, __VMLINUX_SYMBOL_STR(usb_alloc_coherent) },
 	{ 0x34a322e9, __VMLINUX_SYMBOL_STR(usb_get_current_frame_number) },
 	{ 0x5e515be6, __VMLINUX_SYMBOL_STR(ktime_get_ts64) },
+	{ 0xe3bf2704, __VMLINUX_SYMBOL_STR(gpiod_set_value) },
 	{ 0x5fd91e5c, __VMLINUX_SYMBOL_STR(vb2_queue_release) },
 	{ 0x149c7752, __VMLINUX_SYMBOL_STR(param_ops_uint) },
 	{ 0x5745ea32, __VMLINUX_SYMBOL_STR(media_entity_create_link) },
 	{ 0x32d47eef, __VMLINUX_SYMBOL_STR(vb2_streamoff) },
 	{ 0x849f0bea, __VMLINUX_SYMBOL_STR(usb_free_urb) },
+	{ 0x1987d1f, __VMLINUX_SYMBOL_STR(gpiod_put) },
 	{ 0xc1e80558, __VMLINUX_SYMBOL_STR(media_device_unregister) },
 	{ 0xd41998f, __VMLINUX_SYMBOL_STR(usb_autopm_put_interface) },
 	{ 0x578a142, __VMLINUX_SYMBOL_STR(usb_alloc_urb) },
@@ -196,4 +200,4 @@ MODULE_ALIAS("usb:v1B3Bp2951d*dc*dsc*dp*ic0Eisc01ip00in*");
 MODULE_ALIAS("usb:v1C4Fp3000d*dc*dsc*dp*ic0Eisc01ip00in*");
 MODULE_ALIAS("usb:v*p*d*dc*dsc*dp*ic0Eisc01ip00in*");
 
-MODULE_INFO(srcversion, "A8C0F018285D0E84A41F7A7");
+MODULE_INFO(srcversion, "15A4C6FABBC20D6E50F2ACF");

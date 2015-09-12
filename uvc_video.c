@@ -26,6 +26,106 @@
 
 #include "uvcvideo.h"
 
+
+/* ----------------------- EBX- PATCH START ----------------------- */
+#include <linux/gpio/consumer.h>
+
+extern void ebx_monitor_gotnewframe(const struct timeval* inTimeOfNewFrameP);
+extern void ebx_monitor_gotframe(const struct timeval* inTimeOfNewFrameP, const unsigned char inTag);
+
+void (*pebx_monitor_gotnewframe)(const struct timeval* inTimeOfNewFrameP);
+void (*pebx_monitor_gotframe)(const struct timeval* inTimeOfNewFrameP, const unsigned char inTag);
+
+void loc_ebx_monitor_init(void);
+void loc_ebx_monitor_uninit(void);
+void loc_ebx_monitor_gotnewframe(const struct uvc_buffer *buf);
+void loc_ebx_monitor_gotframe(const struct uvc_buffer *buf, const char inTag);
+
+struct gpio_desc * gpio_led_frame;
+struct gpio_desc * gpio_led_monitor;
+
+void loc_ebx_monitor_init(void){
+	gpio_led_frame = gpio_to_desc(68);
+	gpiod_direction_output(gpio_led_frame,1);
+	
+	pebx_monitor_gotnewframe = NULL;
+	pebx_monitor_gotnewframe = symbol_get(ebx_monitor_gotnewframe);
+
+	pebx_monitor_gotframe = NULL;
+	pebx_monitor_gotframe = symbol_get(ebx_monitor_gotframe);
+
+	gpio_led_monitor = gpio_to_desc(69);
+	if ((pebx_monitor_gotnewframe != NULL) && (pebx_monitor_gotframe != NULL))
+	{
+		gpiod_direction_output(gpio_led_monitor,1);
+	}
+	else
+	{
+		gpiod_direction_output(gpio_led_monitor,0);
+	}
+}
+
+void  loc_ebx_monitor_uninit(void){
+	if (pebx_monitor_gotnewframe != NULL) {
+		symbol_put(ebx_monitor_gotnewframe);
+		pebx_monitor_gotnewframe = NULL;
+	}
+
+	if (pebx_monitor_gotframe != NULL) {
+		symbol_put(ebx_monitor_gotframe);
+		pebx_monitor_gotframe = NULL;
+	}
+
+
+	if ((pebx_monitor_gotnewframe == NULL) && (pebx_monitor_gotframe == NULL))
+	{
+		gpiod_set_value(gpio_led_monitor, 0);
+	}
+	else
+	{
+		gpiod_set_value(gpio_led_monitor, 1);
+	}
+	
+	gpiod_put(gpio_led_frame);
+	gpiod_put(gpio_led_monitor);
+}
+
+void  loc_ebx_monitor_gotnewframe(const struct uvc_buffer *buf){
+	if (buf != NULL)
+	{
+		if (pebx_monitor_gotnewframe != NULL) {
+			pebx_monitor_gotnewframe(&buf->buf.v4l2_buf.timestamp);
+		}
+		else{	
+			gpiod_set_value(gpio_led_monitor, 0);	
+			pebx_monitor_gotnewframe = symbol_get(ebx_monitor_gotnewframe);
+			if (pebx_monitor_gotnewframe != NULL) {
+				pebx_monitor_gotnewframe(&buf->buf.v4l2_buf.timestamp);
+				gpiod_set_value(gpio_led_monitor, 1);
+			}
+		}
+	}
+}
+
+void loc_ebx_monitor_gotframe(const struct uvc_buffer *buf, const char inTag){
+	if (buf != NULL)
+	{
+		if (pebx_monitor_gotframe != NULL) {
+			pebx_monitor_gotframe(&buf->buf.v4l2_buf.timestamp,inTag);
+		}
+		else{	
+			gpiod_set_value(gpio_led_monitor, 0);	
+			pebx_monitor_gotframe = symbol_get(ebx_monitor_gotframe);
+			if (pebx_monitor_gotframe != NULL) {
+				pebx_monitor_gotframe(&buf->buf.v4l2_buf.timestamp,inTag);
+				gpiod_set_value(gpio_led_monitor, 1);
+			}
+		}
+	}
+}
+
+/* ----------------------- EBX- PATCH END   ----------------------- */
+
 /* ------------------------------------------------------------------------
  * UVC Controls
  */
@@ -68,6 +168,8 @@ static const char *uvc_query_name(__u8 query)
 		return "<invalid>";
 	}
 }
+
+
 
 int uvc_query_ctrl(struct uvc_device *dev, __u8 query, __u8 unit,
 			__u8 intfnum, __u8 cs, void *data, __u16 size)
@@ -696,6 +798,8 @@ void uvc_video_clock_update(struct uvc_streaming *stream,
 	/* Update the V4L2 buffer. */
 	v4l2_buf->timestamp.tv_sec = ts.tv_sec;
 	v4l2_buf->timestamp.tv_usec = ts.tv_nsec / NSEC_PER_USEC;
+		
+	loc_ebx_monitor_gotframe(buf,11); /*  EBX - GOT - FRAME */
 
 done:
 	spin_unlock_irqrestore(&stream->clock.lock, flags);
@@ -999,6 +1103,8 @@ static int uvc_video_decode_start(struct uvc_streaming *stream,
 		buf->error = 1;
 	}
 
+
+
 	/* Synchronize to the input stream by waiting for the FID bit to be
 	 * toggled when the the buffer state is not UVC_BUF_STATE_ACTIVE.
 	 * stream->last_fid is initialized to -1, so the first isochronous
@@ -1020,11 +1126,13 @@ static int uvc_video_decode_start(struct uvc_streaming *stream,
 		}
 
 		uvc_video_get_ts(&ts);
-
+		
 		buf->buf.v4l2_buf.sequence = stream->sequence;
 		buf->buf.v4l2_buf.timestamp.tv_sec = ts.tv_sec;
 		buf->buf.v4l2_buf.timestamp.tv_usec =
 			ts.tv_nsec / NSEC_PER_USEC;
+
+		loc_ebx_monitor_gotnewframe(buf); /* EBX GOT NEW FRAME */
 
 		/* TODO: Handle PTS and SCR. */
 		buf->state = UVC_BUF_STATE_ACTIVE;
@@ -1051,7 +1159,6 @@ static int uvc_video_decode_start(struct uvc_streaming *stream,
 		buf->state = UVC_BUF_STATE_READY;
 		return -EAGAIN;
 	}
-
 	stream->last_fid = fid;
 
 	return data[0];
@@ -1090,8 +1197,9 @@ static void uvc_video_decode_end(struct uvc_streaming *stream,
 			uvc_trace(UVC_TRACE_FRAME, "EOF in empty payload.\n");
 		buf->state = UVC_BUF_STATE_READY;
 		if (stream->dev->quirks & UVC_QUIRK_STREAM_NO_FID)
-			stream->last_fid ^= UVC_STREAM_FID;
-	}
+			stream->last_fid ^= UVC_STREAM_FID;		
+		// HERE ??? loc_ebx_monitor_gotframe(buf,13); /*  EBX - GOT - FRAME */
+	}	
 }
 
 /* Video payload encoding is handled by uvc_video_encode_header() and
@@ -1194,7 +1302,7 @@ static void uvc_video_decode_isoc(struct urb *urb, struct uvc_streaming *stream,
 			uvc_video_validate_buffer(stream, buf);
 			buf = uvc_queue_next_buffer(&stream->queue, buf);
 		}
-	}
+	}	
 }
 
 static void uvc_video_decode_bulk(struct urb *urb, struct uvc_streaming *stream,
@@ -1306,6 +1414,7 @@ static void uvc_video_encode_bulk(struct urb *urb, struct uvc_streaming *stream,
 	}
 
 	urb->transfer_buffer_length = stream->urb_size - len;
+
 }
 
 static void uvc_video_complete(struct urb *urb)
@@ -1345,7 +1454,7 @@ static void uvc_video_complete(struct urb *urb)
 	if ((ret = usb_submit_urb(urb, GFP_ATOMIC)) < 0) {
 		uvc_printk(KERN_ERR, "Failed to resubmit video URB (%d).\n",
 			ret);
-	}
+	}	
 }
 
 /*
@@ -1436,6 +1545,8 @@ static void uvc_uninit_video(struct uvc_streaming *stream, int free_buffers)
 {
 	struct urb *urb;
 	unsigned int i;
+
+	loc_ebx_monitor_uninit(); /*  EBX - UNINIT */
 
 	uvc_video_stats_stop(stream);
 
@@ -1770,6 +1881,8 @@ int uvc_video_init(struct uvc_streaming *stream)
 	struct uvc_frame *frame = NULL;
 	unsigned int i;
 	int ret;
+
+	loc_ebx_monitor_init(); /* EBX - INIT */
 
 	if (stream->nformats == 0) {
 		uvc_printk(KERN_INFO, "No supported video formats found.\n");

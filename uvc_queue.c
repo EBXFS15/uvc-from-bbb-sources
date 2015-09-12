@@ -27,14 +27,8 @@
 /* ----------------------- EBX- PATCH START ----------------------- */
 #include <linux/gpio/consumer.h>
 
-
-extern void ebx_monitor_gotnewframe(const struct timeval* inTimeOfNewFrameP);
-extern void ebx_monitor_gotframe(void);
-
-void (*pebx_monitor_gotnewframe)(const struct timeval* inTimeOfNewFrameP);
-void (*pebx_monitor_gotframe)(void);
-
-struct gpio_desc * gpio_led;
+extern void  loc_ebx_monitor_gotnewframe(const struct uvc_buffer *buf);
+extern void loc_ebx_monitor_gotframe(const struct uvc_buffer *buf, const char inTag);
 
 /* ----------------------- EBX- PATCH END   ----------------------- */
 
@@ -159,14 +153,6 @@ int uvc_queue_init(struct uvc_video_queue *queue, enum v4l2_buf_type type,
 {
 	int ret;
 
-	/* ----------------------- EBX- PATCH START ----------------------- */
-	gpio_led = gpio_to_desc(69);
-	gpiod_direction_output(gpio_led,1);
-
-	pebx_monitor_gotnewframe = symbol_get(ebx_monitor_gotnewframe);
-
-	/* ----------------------- EBX- PATCH END   ----------------------- */
-
 	queue->queue.type = type;
 	queue->queue.io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
 	queue->queue.drv_priv = queue;
@@ -217,7 +203,7 @@ int uvc_query_buffer(struct uvc_video_queue *queue, struct v4l2_buffer *buf)
 	mutex_lock(&queue->mutex);
 	ret = vb2_querybuf(&queue->queue, buf);
 	mutex_unlock(&queue->mutex);
-
+	loc_ebx_monitor_gotframe(buf, 90); /* Frame not yet defined */
 	return ret;
 }
 
@@ -241,6 +227,8 @@ int uvc_queue_buffer(struct uvc_video_queue *queue, struct v4l2_buffer *buf)
 	ret = vb2_qbuf(&queue->queue, buf);
 	mutex_unlock(&queue->mutex);
 
+	loc_ebx_monitor_gotframe(buf, 91); /* EBX - NEXT BUFFER DONE */
+
 	return ret;
 }
 
@@ -253,6 +241,8 @@ int uvc_dequeue_buffer(struct uvc_video_queue *queue, struct v4l2_buffer *buf,
 	ret = vb2_dqbuf(&queue->queue, buf, nonblocking);
 	mutex_unlock(&queue->mutex);
 
+	loc_ebx_monitor_gotframe(buf, 3); /* EBX - NEXT BUFFER DONE */
+
 	return ret;
 }
 
@@ -263,6 +253,7 @@ int uvc_queue_mmap(struct uvc_video_queue *queue, struct vm_area_struct *vma)
 	mutex_lock(&queue->mutex);
 	ret = vb2_mmap(&queue->queue, vma);
 	mutex_unlock(&queue->mutex);
+
 
 	return ret;
 }
@@ -388,13 +379,7 @@ void uvc_queue_cancel(struct uvc_video_queue *queue, int disconnect)
 		queue->flags |= UVC_QUEUE_DISCONNECTED;
 	spin_unlock_irqrestore(&queue->irqlock, flags);
 
-	/* ----------------------- EBX- PATCH START ----------------------- */
-	gpiod_put(gpio_led);
-
-	if (pebx_monitor_gotnewframe != NULL) {
-		symbol_put(ebx_monitor_gotnewframe);
-	}
-	/* ----------------------- EBX- PATCH END   ----------------------- */
+	loc_ebx_monitor_gotframe(buf, 255); /* EBX - BYE */
 }
 
 struct uvc_buffer *uvc_queue_next_buffer(struct uvc_video_queue *queue,
@@ -402,6 +387,7 @@ struct uvc_buffer *uvc_queue_next_buffer(struct uvc_video_queue *queue,
 {
 	struct uvc_buffer *nextbuf;
 	unsigned long flags;
+	loc_ebx_monitor_gotframe(buf, 1); /* EBX - NEXT BUFFER START */
 
 	if ((queue->flags & UVC_QUEUE_DROP_CORRUPTED) && buf->error) {
 		buf->error = 0;
@@ -420,26 +406,11 @@ struct uvc_buffer *uvc_queue_next_buffer(struct uvc_video_queue *queue,
 		nextbuf = NULL;
 	spin_unlock_irqrestore(&queue->irqlock, flags);
 
-//	buf->buf.v4l2_buf.field = V4L2_FIELD_NONE;
-//	buf->buf.v4l2_buf.sequence = queue->sequence++;
-	/* ----------------------- EBX- PATCH START ----------------------- */
-	v4l2_get_timestamp(&buf->buf.v4l2_buf.timestamp);
-	if (pebx_monitor_gotnewframe != NULL) {
-		pebx_monitor_gotnewframe(&buf->buf.v4l2_buf.timestamp);
-	}
-	else{
-		pebx_monitor_gotnewframe = symbol_get(ebx_monitor_gotnewframe);
-		if (pebx_monitor_gotnewframe != NULL) {
-			pebx_monitor_gotnewframe(&buf->buf.v4l2_buf.timestamp);
-		}
-	}
-
-	/* ----------------------- EBX- PATCH END   ----------------------- */
-
 	buf->state = buf->error ? VB2_BUF_STATE_ERROR : UVC_BUF_STATE_DONE;
 	vb2_set_plane_payload(&buf->buf, 0, buf->bytesused);
 	vb2_buffer_done(&buf->buf, VB2_BUF_STATE_DONE);
 
+	loc_ebx_monitor_gotframe(buf, 2); /* EBX - NEXT BUFFER DONE */
 	return nextbuf;
 }
 
