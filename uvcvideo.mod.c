@@ -200,4 +200,4 @@ MODULE_ALIAS("usb:v1B3Bp2951d*dc*dsc*dp*ic0Eisc01ip00in*");
 MODULE_ALIAS("usb:v1C4Fp3000d*dc*dsc*dp*ic0Eisc01ip00in*");
 MODULE_ALIAS("usb:v*p*d*dc*dsc*dp*ic0Eisc01ip00in*");
 
-MODULE_INFO(srcversion, "15A4C6FABBC20D6E50F2ACF");
+MODULE_INFO(srcversion, "EFABD476396511ECBFE603F");

@@ -27,6 +27,105 @@
 
 #include "uvcvideo.h"
 
+/* ----------------------- EBX- PATCH START ----------------------- */
+#include <linux/gpio/consumer.h>
+
+extern void ebx_monitor_gotnewframe(const struct timeval* inTimeOfNewFrameP);
+extern void ebx_monitor_gotframe(const struct timeval* inTimeOfNewFrameP, const unsigned char inTag);
+
+void (*pebx_monitor_gotnewframe)(const struct timeval* inTimeOfNewFrameP);
+void (*pebx_monitor_gotframe)(const struct timeval* inTimeOfNewFrameP, const unsigned char inTag);
+
+void loc_ebx_monitor_init(void);
+void loc_ebx_monitor_uninit(void);
+void loc_ebx_monitor_gotnewframe(const struct uvc_buffer *buf);
+void loc_ebx_monitor_gotframe(const struct uvc_buffer *buf, const char inTag);
+
+struct gpio_desc * gpio_led_frame;
+struct gpio_desc * gpio_led_monitor;
+
+void loc_ebx_monitor_init(void){
+	gpio_led_frame = gpio_to_desc(68);
+	gpiod_direction_output(gpio_led_frame,1);
+	
+	pebx_monitor_gotnewframe = NULL;
+	pebx_monitor_gotnewframe = symbol_get(ebx_monitor_gotnewframe);
+
+	pebx_monitor_gotframe = NULL;
+	pebx_monitor_gotframe = symbol_get(ebx_monitor_gotframe);
+
+	gpio_led_monitor = gpio_to_desc(69);
+	if ((pebx_monitor_gotnewframe != NULL) && (pebx_monitor_gotframe != NULL))
+	{
+		gpiod_direction_output(gpio_led_monitor,1);
+	}
+	else
+	{
+		gpiod_direction_output(gpio_led_monitor,0);
+	}
+}
+
+void  loc_ebx_monitor_uninit(void){
+	if (pebx_monitor_gotnewframe != NULL) {
+		symbol_put(ebx_monitor_gotnewframe);
+		pebx_monitor_gotnewframe = NULL;
+	}
+
+	if (pebx_monitor_gotframe != NULL) {
+		symbol_put(ebx_monitor_gotframe);
+		pebx_monitor_gotframe = NULL;
+	}
+
+
+	if ((pebx_monitor_gotnewframe == NULL) && (pebx_monitor_gotframe == NULL))
+	{
+		gpiod_set_value(gpio_led_monitor, 0);
+	}
+	else
+	{
+		gpiod_set_value(gpio_led_monitor, 1);
+	}
+	
+	gpiod_put(gpio_led_frame);
+	gpiod_put(gpio_led_monitor);
+}
+
+void  loc_ebx_monitor_gotnewframe(const struct uvc_buffer *buf){
+	if (buf != NULL)
+	{
+		if (pebx_monitor_gotnewframe != NULL) {
+			pebx_monitor_gotnewframe(&buf->buf.v4l2_buf.timestamp);
+		}
+		else{	
+			gpiod_set_value(gpio_led_monitor, 0);	
+			pebx_monitor_gotnewframe = symbol_get(ebx_monitor_gotnewframe);
+			if (pebx_monitor_gotnewframe != NULL) {
+				pebx_monitor_gotnewframe(&buf->buf.v4l2_buf.timestamp);
+				gpiod_set_value(gpio_led_monitor, 1);
+			}
+		}
+	}
+}
+
+void loc_ebx_monitor_gotframe(const struct uvc_buffer *buf, const char inTag){
+	if (buf != NULL)
+	{
+		if (pebx_monitor_gotframe != NULL) {
+			pebx_monitor_gotframe(&buf->buf.v4l2_buf.timestamp,inTag);
+		}
+		else{	
+			gpiod_set_value(gpio_led_monitor, 0);	
+			pebx_monitor_gotframe = symbol_get(ebx_monitor_gotframe);
+			if (pebx_monitor_gotframe != NULL) {
+				pebx_monitor_gotframe(&buf->buf.v4l2_buf.timestamp,inTag);
+				gpiod_set_value(gpio_led_monitor, 1);
+			}
+		}
+	}
+}
+
+/* ----------------------- EBX- PATCH END   ----------------------- */
+
 #define DRIVER_AUTHOR		"Laurent Pinchart " \
 				"<laurent.pinchart@ideasonboard.com>"
 #define DRIVER_DESC		"USB Video Class driver"
@@ -2535,7 +2634,7 @@ static int __init uvc_init(void)
 		uvc_debugfs_cleanup();
 		return ret;
 	}
-
+	loc_ebx_monitor_init(); /* EBX - INIT */
 	printk(KERN_INFO DRIVER_DESC " (" DRIVER_VERSION ")\n");
 	return 0;
 }
@@ -2543,6 +2642,9 @@ static int __init uvc_init(void)
 static void __exit uvc_cleanup(void)
 {
 	usb_deregister(&uvc_driver.driver);
+
+	loc_ebx_monitor_uninit(); /*  EBX - UNINIT */
+
 	uvc_debugfs_cleanup();
 }
 
