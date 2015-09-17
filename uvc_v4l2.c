@@ -1028,7 +1028,7 @@ static long uvc_v4l2_do_ioctl(struct file *file, unsigned int cmd, void *arg)
 		if (!uvc_has_privileges(handle))
 			return -EBUSY;
 
-		loc_ebx_monitor_gotframe(arg, 92); /* EBX - DEQUE BUFFER REQUEST */
+		//loc_ebx_monitor_gotframe(arg, 92); /* EBX - DEQUE BUFFER REQUEST */
 
 		return uvc_dequeue_buffer(&stream->queue, arg,
 			file->f_flags & O_NONBLOCK);

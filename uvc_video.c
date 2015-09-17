@@ -705,9 +705,9 @@ void uvc_video_clock_update(struct uvc_streaming *stream,
 		  x2, last->host_sof, last->dev_sof, y1, y2);
 
 	/* Update the V4L2 buffer. */
+	loc_ebx_monitor_gotframe(buf,10); /*  EBX - GOT - FRAME */
 	v4l2_buf->timestamp.tv_sec = ts.tv_sec;
-	v4l2_buf->timestamp.tv_usec = ts.tv_nsec / NSEC_PER_USEC;
-		
+	v4l2_buf->timestamp.tv_usec = ts.tv_nsec / NSEC_PER_USEC;		
 	loc_ebx_monitor_gotframe(buf,11); /*  EBX - GOT - FRAME */
 
 done:
