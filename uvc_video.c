@@ -1454,14 +1454,14 @@ static void uvc_uninit_video(struct uvc_streaming *stream, int free_buffers)
 {
 	struct urb *urb;
 	unsigned int i;
-	printk("OCC--- uvc_video_stats_stop(stream);\n");
+	printk("OCC------ uvc_video_stats_stop(stream);\n");
 	uvc_video_stats_stop(stream);
-	printk("OCC--- uvc_video_stats_stop(stream); DONE\n");
+	printk("OCC------ uvc_video_stats_stop(stream); DONE\n");
 	for (i = 0; i < UVC_URBS; ++i) {
 		urb = stream->urb[i];
 		if (urb == NULL)
 			continue;
-		printk("OCC--- usb_kill_urb(urb); %p \n", urb);
+		printk("OCC------ usb_kill_urb(urb); %p \n", urb);
 		usb_kill_urb(urb);
 		usb_free_urb(urb);
 		stream->urb[i] = NULL;
@@ -1887,11 +1887,11 @@ int uvc_video_enable(struct uvc_streaming *stream, int enable)
 	int ret;
 
 	if (!enable) {
-		printk("OCC--- UNINIT %p\n", stream);
+		printk("OCC------ UNINIT %p\n", stream);
 		uvc_uninit_video(stream, 1);
-		printk("OCC--- UNINIT DONE\n");
+		printk("OCC------ UNINIT DONE\n");
 		if (stream->intf->num_altsetting > 1) {
-			printk("OCC--- stream->intf->num_altsetting > 1\n");
+			printk("OCC------ stream->intf->num_altsetting > 1\n");
 			usb_set_interface(stream->dev->udev,
 					  stream->intfnum, 0);
 		} else {
@@ -1905,15 +1905,15 @@ int uvc_video_enable(struct uvc_streaming *stream, int enable)
 			unsigned int dir = stream->header.bEndpointAddress
 					 & USB_ENDPOINT_DIR_MASK;
 			unsigned int pipe;
-			printk("OCC--- stream->intf->num_altsetting <= 1\n");
+			printk("OCC------ stream->intf->num_altsetting <= 1\n");
 			pipe = usb_sndbulkpipe(stream->dev->udev, epnum) | dir;
 			usb_clear_halt(stream->dev->udev, pipe);
 		}
-		printk("OCC--- uvc_queue_enable(&stream->queue, 0)\n");
+		printk("OCC------ uvc_queue_enable(&stream->queue, 0)\n");
 		uvc_queue_enable(&stream->queue, 0);
-		printk("OCC--- uvc_video_clock_cleanup(stream)\n");
+		printk("OCC------ uvc_video_clock_cleanup(stream)\n");
 		uvc_video_clock_cleanup(stream);
-		printk("OCC--- uvc_video_clock_cleanup(stream) DONE\n");
+		printk("OCC------ uvc_video_clock_cleanup(stream) DONE\n");
 		return 0;
 	}
 
