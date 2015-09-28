@@ -1068,7 +1068,7 @@ static long uvc_v4l2_do_ioctl(struct file *file, unsigned int cmd, void *arg)
 
 		if (!uvc_has_privileges(handle))
 			return -EBUSY;
-
+		printk("OCC--- Enter uvc_video_enable (stream, 0)\n");
 		return uvc_video_enable(stream, 0);
 	}
 

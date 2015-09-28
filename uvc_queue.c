@@ -241,7 +241,7 @@ int uvc_dequeue_buffer(struct uvc_video_queue *queue, struct v4l2_buffer *buf,
 	ret = vb2_dqbuf(&queue->queue, buf, nonblocking);
 	mutex_unlock(&queue->mutex);
 
-	loc_ebx_monitor_gotframe(buf, 20); /* EBX - NEXT BUFFER DONE */
+//	loc_ebx_monitor_gotframe(buf, 20); /* EBX - NEXT BUFFER DONE */
 
 	return ret;
 }
@@ -379,7 +379,7 @@ void uvc_queue_cancel(struct uvc_video_queue *queue, int disconnect)
 		queue->flags |= UVC_QUEUE_DISCONNECTED;
 	spin_unlock_irqrestore(&queue->irqlock, flags);
 
-	loc_ebx_monitor_gotframe(buf, 200); /* EBX - BYE */
+	//loc_ebx_monitor_gotframe(buf, 200); /* EBX - BYE */
 }
 
 struct uvc_buffer *uvc_queue_next_buffer(struct uvc_video_queue *queue,
