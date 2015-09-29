@@ -20,8 +20,12 @@ Preconditions is:
 /opt/embedded/bbb/kernel/linux-dev-am33x-v3.18/make
 * to save time and build only the specific driver use the following command:
 make SUBDIRS=drivers/media/usb/uvc modules
-* Repeat the steps from section 2.17 of the lab 1-1
-* Now the driver is the default driver on your board and you can go to the EyeTrackerQT project.
-* The green and blue light shall be turned on after the reboot of the board.
+* Now take the uvcvideo.ko from /opt/embedded/bbb/kernel/linux-dev-am33x-v3.18/drivers/media/usb/uvc and follow the option 1 from above.
+
+# Option 3
+* Instead of taking the uvcvideo.ko from /opt/embedded/bbb/kernel/linux-dev-am33x-v3.18/drivers/media/usb/uvc repeat the steps from section 2.17 of the lab 1-1
+* Now the driver is the default driver on your board.
+* The green light shall be turned on after the reboot of the board.
+* As soon you load the ebx_monoitor.ko and you start to capture from the webcam the blue ligth will be turned on.
 
 
