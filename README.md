@@ -9,7 +9,7 @@ Preconditions is:
 
 # Option 1
 * Copy the uvcvideo.ko to the folder of your choice on the target
-* Copy the ebx_Monitor.ko to the same folder
+* Copy the ebx_Monitor.ko from (https://github.com/EBXFS15/ebx_monitor) to the same folder
 * Load first the ebx_monitor.ko and then the uvcvideo.ko.
 * The green and blue light shall be turned on after the insmod procedrue has finished.
 
