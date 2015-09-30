@@ -11,7 +11,7 @@ Preconditions is:
 * Copy the uvcvideo.ko to the folder of your choice on the target
 * Copy the ebx_Monitor.ko from (https://github.com/EBXFS15/ebx_monitor) to the same folder
 * Load first the ebx_monitor.ko and then the uvcvideo.ko.
-* The green and blue light shall be turned on after the insmod procedrue has finished.
+* The green and blue LED's shall be turned on after the insmod procedrue for both modules finished.
 
 # Option 2
 * copy the files to the following folder:
@@ -25,7 +25,7 @@ make SUBDIRS=drivers/media/usb/uvc modules
 # Option 3
 * Instead of taking the uvcvideo.ko from /opt/embedded/bbb/kernel/linux-dev-am33x-v3.18/drivers/media/usb/uvc repeat the steps from section 2.17 of the lab 1-1
 * Now the driver is the default driver on your board.
-* The green light shall be turned on after the reboot of the board and if the uvcvideo is loaded (if webcam is plugged in).
-* As soon you load the ebx_monoitor.ko and you start to capture from the webcam the blue ligth will be turned on.
+* The green LED shall be turned on after the reboot of the board and if the uvcvideo is loaded (if webcam is plugged in).
+* As soon you load the ebx_monoitor.ko and you start to capture from the webcam the blue LED will be turned on.
 
 
