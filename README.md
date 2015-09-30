@@ -2,7 +2,7 @@
 
 In orer to have an insight into the details of the UVCVIDEO driver a measurement procedure has been defined (see EyeTrackerQT project). This project includes all soruces needed to get a UVCVIDEO driver with the neede modifications to interact with the the EyeTrackerQT project. For ease of use the binaries of the modules have been added to the porject. The modules were cross compiled for the standard distribution as defined in the Lab 1-1 Embedded Linux configuration (linux-dev-am33x-v3.18).
 
-Preconditions is:
+# Preconditions
 * Hardware: EBX-BBB-KIT with Chipsee board
 * Lab1 (LAB 1-1 Embedded Linux Configuration - Ubuntu 14.04 LTS) done.
 
